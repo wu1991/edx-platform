@@ -283,7 +283,7 @@ def add_user_to_cohort(cohort, username_or_email, group_type=CourseUserGroup.COH
     user = get_user_by_username_or_email(username_or_email)
     previous_cohort = None
 
-    if allow_multiple is False:
+    if not allow_multiple:
         course_cohorts = CourseUserGroup.objects.filter(
             course_id=cohort.course_id,
             users__id=user.id,
@@ -299,6 +299,42 @@ def add_user_to_cohort(cohort, username_or_email, group_type=CourseUserGroup.COH
 
     cohort.users.add(user)
     return (user, previous_cohort)
+
+
+def remove_user_from_cohort(cohort, username_or_email, group_type=CourseUserGroup.COHORT):
+    """
+    Look up the given user, and if successful, remove them to the specified cohort.
+
+    Arguments:
+        cohort: CourseUserGroup
+        username_or_email: string.  Treated as email if has '@'
+        group_type: cohort type to query
+
+    Returns:
+        User object that has been removed from the cohort
+
+    Raises:
+        User.DoesNotExist if can't find user.
+
+        ValueError if user is not in this cohort.
+    """
+
+    if group_type == CourseUserGroup.ANY:
+        raise ValueError("Invalid group_type for remove_user_from_cohort.")
+
+    user = get_user_by_username_or_email(username_or_email)
+
+    course_cohorts = CourseUserGroup.objects.filter(
+        course_id=cohort.course_id,
+        users__id=user.id,
+        group_type=group_type)
+    if not course_cohorts.exists():
+        raise ValueError("User {0} is not in cohort {1}".format(
+            user.username,
+            cohort.name))
+
+    cohort.users.remove(user)
+    return user
 
 
 def get_course_cohort_names(course_id, group_type=CourseUserGroup.COHORT):
