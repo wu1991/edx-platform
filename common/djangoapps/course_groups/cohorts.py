@@ -43,12 +43,12 @@ def is_course_cohorted(course_id):
     return courses.get_course_by_id(course_id).is_cohorted
 
 
-def get_cohort_id(user, course_id):
+def get_cohort_id(user, course_id, group_type=CourseUserGroup.COHORT):
     """
     Given a course id and a user, return the id of the cohort that user is
     assigned to in that course.  If they don't have a cohort, return None.
     """
-    cohort = get_cohort(user, course_id)
+    cohort = get_cohort(user, course_id, group_type=group_type)
     return None if cohort is None else cohort.id
 
 
@@ -99,7 +99,7 @@ def get_cohorted_commentables(course_id):
     return ans
 
 
-def get_cohort(user, course_id):
+def get_cohort(user, course_id, group_type=CourseUserGroup.COHORT):
     """
     Given a django User and a course_id, return the user's cohort in that
     cohort.
@@ -107,6 +107,7 @@ def get_cohort(user, course_id):
     Arguments:
         user: a Django User object.
         course_id: string in the format 'org/course/run'
+        group_type: cohort type to query.
 
     Returns:
         A CourseUserGroup object if the course is cohorted and the User has a
@@ -125,15 +126,22 @@ def get_cohort(user, course_id):
     if not course.is_cohorted:
         return None
 
+    if group_type == CourseUserGroup.ANY:
+        raise ValueError("Invalid group_type for get_cohort.")
+
     try:
         return CourseUserGroup.objects.get(course_id=course_id,
-                                            group_type=CourseUserGroup.COHORT,
-                                            users__id=user.id)
+                                           group_type=group_type,
+                                           users__id=user.id)
     except CourseUserGroup.DoesNotExist:
         # Didn't find the group.  We'll go on to create one if needed.
         pass
 
     if not course.auto_cohort:
+        return None
+
+    if group_type != CourseUserGroup.COHORT:
+        log.warning("auto_cohort is only supported with course group of 'COHORT' type")
         return None
 
     choices = course.auto_cohort_groups
@@ -150,37 +158,76 @@ def get_cohort(user, course_id):
 
     group, created = CourseUserGroup.objects.get_or_create(
         course_id=course_id,
-        group_type=CourseUserGroup.COHORT,
+        group_type=group_type,
         name=group_name)
 
     user.course_groups.add(group)
     return group
 
 
-def get_course_cohorts(course_id):
+def get_cohorts(user, course_id, group_type=CourseUserGroup.COHORT):
+    """
+    Given a django User and a course_id, return the user's cohorts.
+
+    Arguments:
+        user: a Django User object.
+        course_id: string in the format 'org/course/run'
+        group_type: cohort type to query.
+
+    Returns:
+        A list of CourseUserGroup objects if the course is cohorted and the User has a
+        cohort, else an empty list.
+
+    Raises:
+       ValueError if the course_id doesn't exist.
+    """
+    try:
+        course = courses.get_course_by_id(course_id)
+    except Http404:
+        raise ValueError("Invalid course_id")
+
+    if not course.is_cohorted:
+        return []
+
+    params = {'course_id': course_id,
+              'users__id': user.id}
+    if group_type != CourseUserGroup.ANY:
+        params['group_type'] = group_type
+
+    return list(CourseUserGroup.objects.filter(**params))
+
+
+def get_course_cohorts(course_id, group_type=CourseUserGroup.COHORT):
     """
     Get a list of all the cohorts in the given course.
 
     Arguments:
         course_id: string in the format 'org/course/run'
+        group_type: cohort type to query.
 
     Returns:
         A list of CourseUserGroup objects.  Empty if there are no cohorts. Does
         not check whether the course is cohorted.
     """
-    return list(CourseUserGroup.objects.filter(course_id=course_id,
-                                               group_type=CourseUserGroup.COHORT))
+    params = {'course_id': course_id}
+    if group_type != CourseUserGroup.ANY:
+        params['group_type'] = group_type
+
+    return list(CourseUserGroup.objects.filter(**params))
 
 ### Helpers for cohort management views
 
 
-def get_cohort_by_name(course_id, name):
+def get_cohort_by_name(course_id, name, group_type=CourseUserGroup.COHORT):
     """
     Return the CourseUserGroup object for the given cohort.  Raises DoesNotExist
     it isn't present.
     """
+    if group_type == CourseUserGroup.ANY:
+        raise ValueError("invalid group_type for get_cohort_by_name")
+
     return CourseUserGroup.objects.get(course_id=course_id,
-                                       group_type=CourseUserGroup.COHORT,
+                                       group_type=group_type,
                                        name=name)
 
 
@@ -189,24 +236,22 @@ def get_cohort_by_id(course_id, cohort_id):
     Return the CourseUserGroup object for the given cohort.  Raises DoesNotExist
     it isn't present.  Uses the course_id for extra validation...
     """
-    return CourseUserGroup.objects.get(course_id=course_id,
-                                       group_type=CourseUserGroup.COHORT,
-                                       id=cohort_id)
+    return CourseUserGroup.objects.get(course_id=course_id, id=cohort_id)
 
 
-def add_cohort(course_id, name):
+def add_cohort(course_id, name, group_type=CourseUserGroup.COHORT):
     """
     Add a cohort to a course.  Raises ValueError if a cohort of the same name already
     exists.
     """
     log.debug("Adding cohort %s to %s", name, course_id)
     if CourseUserGroup.objects.filter(course_id=course_id,
-                                      group_type=CourseUserGroup.COHORT,
+                                      group_type=group_type,
                                       name=name).exists():
         raise ValueError("Can't create two cohorts with the same name")
 
     return CourseUserGroup.objects.create(course_id=course_id,
-                                          group_type=CourseUserGroup.COHORT,
+                                          group_type=group_type,
                                           name=name)
 
 
@@ -217,13 +262,15 @@ class CohortConflict(Exception):
     pass
 
 
-def add_user_to_cohort(cohort, username_or_email):
+def add_user_to_cohort(cohort, username_or_email, group_type=CourseUserGroup.COHORT, allow_multiple=False):
     """
     Look up the given user, and if successful, add them to the specified cohort.
 
     Arguments:
         cohort: CourseUserGroup
         username_or_email: string.  Treated as email if has '@'
+        group_type: cohort type to query
+        allow_multiple: specify if the user can be in multiple cohorts
 
     Returns:
         Tuple of User object and string (or None) indicating previous cohort
@@ -236,35 +283,36 @@ def add_user_to_cohort(cohort, username_or_email):
     user = get_user_by_username_or_email(username_or_email)
     previous_cohort = None
 
-    course_cohorts = CourseUserGroup.objects.filter(
-        course_id=cohort.course_id,
-        users__id=user.id,
-        group_type=CourseUserGroup.COHORT)
-    if course_cohorts.exists():
-        if course_cohorts[0] == cohort:
-            raise ValueError("User {0} already present in cohort {1}".format(
-                user.username,
-                cohort.name))
-        else:
-            previous_cohort = course_cohorts[0].name
-            course_cohorts[0].users.remove(user)
+    if allow_multiple is False:
+        course_cohorts = CourseUserGroup.objects.filter(
+            course_id=cohort.course_id,
+            users__id=user.id,
+            group_type=group_type)
+        if course_cohorts.exists():
+            if course_cohorts[0] == cohort:
+                raise ValueError("User {0} already present in cohort {1}".format(
+                    user.username,
+                    cohort.name))
+            else:
+                previous_cohort = course_cohorts[0].name
+                course_cohorts[0].users.remove(user)
 
     cohort.users.add(user)
     return (user, previous_cohort)
 
 
-def get_course_cohort_names(course_id):
+def get_course_cohort_names(course_id, group_type=CourseUserGroup.COHORT):
     """
     Return a list of the cohort names in a course.
     """
-    return [c.name for c in get_course_cohorts(course_id)]
+    return [c.name for c in get_course_cohorts(course_id, group_type=group_type)]
 
 
-def delete_empty_cohort(course_id, name):
+def delete_empty_cohort(course_id, name, group_type=CourseUserGroup.COHORT):
     """
     Remove an empty cohort.  Raise ValueError if cohort is not empty.
     """
-    cohort = get_cohort_by_name(course_id, name)
+    cohort = get_cohort_by_name(course_id, name, group_type=group_type)
     if cohort.users.exists():
         raise ValueError(
             "Can't delete non-empty cohort {0} in course {1}".format(
