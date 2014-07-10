@@ -69,6 +69,9 @@ CC_PROCESSOR['CyberSource']['PURCHASE_ENDPOINT'] = '/shoppingcart/payment_fake/'
 
 FEATURES['API'] = True
 
+########################## USER API ########################
+EDX_API_KEY = None
+
 
 #####################################################################
 # Lastly, see if the developer has any local overrides.
