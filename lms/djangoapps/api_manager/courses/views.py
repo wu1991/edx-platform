@@ -1251,6 +1251,7 @@ class CourseModuleCompletionList(SecureListAPIView):
                     "user_id": "3",
                     "course_id": "32fgdf",
                     "content_id": "324dfgd",
+                    "stage": "First",
                     "created": "2014-06-10T13:14:49.878Z",
                     "modified": "2014-06-10T13:14:49.914Z"
                 }
@@ -1259,13 +1260,14 @@ class CourseModuleCompletionList(SecureListAPIView):
 
     Filters can also be applied
     ```/api/courses/{course_id}/completions/?user_id={user_id}```
-    ```/api/courses/{course_id}/completions/?content_id={content_id}```
+    ```/api/courses/{course_id}/completions/?content_id={content_id}&stage={stage}```
     ```/api/courses/{course_id}/completions/?user_id={user_id}&content_id={content_id}```
     - POST: Creates a Course-Module completion entity
     - POST Example:
         {
             "content_id":"i4x://the/content/location",
-            "user_id":4
+            "user_id":4,
+            "stage": "First"
         }
     ### Use Cases/Notes:
     * Use GET operation to retrieve list of course completions by user
@@ -1279,6 +1281,7 @@ class CourseModuleCompletionList(SecureListAPIView):
         """
         user_ids = self.request.QUERY_PARAMS.get('user_id', None)
         content_id = self.request.QUERY_PARAMS.get('content_id', None)
+        stage = self.request.QUERY_PARAMS.get('stage', None)
         course_id = self.kwargs['course_id']
         queryset = CourseModuleCompletion.objects.filter(course_id=course_id)
         upper_bound = getattr(settings, 'API_LOOKUP_UPPER_BOUND', 100)
@@ -1289,6 +1292,9 @@ class CourseModuleCompletionList(SecureListAPIView):
         if content_id:
             queryset = queryset.filter(content_id=content_id)
 
+        if stage:
+            queryset = queryset.filter(stage=stage)
+
         return queryset
 
     def post(self, request, course_id):
@@ -1297,6 +1303,7 @@ class CourseModuleCompletionList(SecureListAPIView):
         """
         content_id = request.DATA.get('content_id', None)
         user_id = request.DATA.get('user_id', None)
+        stage = request.DATA.get('stage', None)
         if not content_id:
             return Response({'message': _('content_id is missing')}, status.HTTP_400_BAD_REQUEST)
         if not user_id:
@@ -1304,7 +1311,8 @@ class CourseModuleCompletionList(SecureListAPIView):
 
         completion, created = CourseModuleCompletion.objects.get_or_create(user_id=user_id,
                                                                            course_id=course_id,
-                                                                           content_id=content_id)
+                                                                           content_id=content_id,
+                                                                           stage=stage)
         serializer = CourseModuleCompletionSerializer(completion)
         if created:
             return Response(serializer.data, status=status.HTTP_201_CREATED)  # pylint: disable=E1101

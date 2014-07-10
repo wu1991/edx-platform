@@ -1217,7 +1217,8 @@ class CoursesApiTests(TestCase):
         self.assertEqual(response.status_code, 201)
         created_user_id = response.data['id']
         completions_uri = '{}/{}/completions/'.format(self.base_courses_uri, self.course.id)
-        completions_data = {'content_id': self.course_content.id, 'user_id': created_user_id}
+        stage = 'First'
+        completions_data = {'content_id': self.course_content.id, 'user_id': created_user_id, 'stage': stage}
         response = self.do_post(completions_uri, completions_data)
         self.assertEqual(response.status_code, 201)
         coursemodulecomp_id = response.data['id']
@@ -1225,6 +1226,7 @@ class CoursesApiTests(TestCase):
         self.assertEqual(response.data['user_id'], created_user_id)
         self.assertEqual(response.data['course_id'], self.course.id)
         self.assertEqual(response.data['content_id'], self.course_content.id)
+        self.assertEqual(response.data['stage'], stage)
         self.assertIsNotNone(response.data['created'])
         self.assertIsNotNone(response.data['modified'])
 
@@ -1257,8 +1259,13 @@ class CoursesApiTests(TestCase):
             created_user_id = response.data['id']
 
         for i in xrange(1, 26):
-            content_id = self.course_content.id + str(i)
-            completions_data = {'content_id': content_id, 'user_id': created_user_id}
+            if i < 25:
+                content_id = self.course_content.id + str(i)
+                stage = None
+            else:
+                content_id = self.course_content.id
+                stage = 'Last'
+            completions_data = {'content_id': content_id, 'user_id': created_user_id, 'stage': stage}
             response = self.do_post(completion_uri, completions_data)
             self.assertEqual(response.status_code, 201)
 
@@ -1293,6 +1300,13 @@ class CoursesApiTests(TestCase):
 
         #filter course module completion by content_id
         content_filter_uri = '{}?content_id={}'.format(completion_uri, self.course_content.id + str(1))
+        response = self.do_get(content_filter_uri)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(len(response.data['results']), 1)
+
+        #filter course module completion by stage
+        content_filter_uri = '{}?stage={}'.format(completion_uri, 'Last')
         response = self.do_get(content_filter_uri)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['count'], 1)
