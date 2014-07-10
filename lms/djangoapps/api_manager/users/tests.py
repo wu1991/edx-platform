@@ -53,7 +53,11 @@ class UsersApiTests(TestCase):
         self.org_base_uri = '/api/organizations/'
 
         self.test_course_data = '<html>{}</html>'.format(str(uuid.uuid4()))
-        self.course = CourseFactory.create()
+        self.course = CourseFactory.create(
+            display_name="TEST COURSE",
+            start="2014-06-16T14:30:00Z",
+            end="2015-01-16T14:30:00Z"
+        )
         self.course_content = ItemFactory.create(
             category="videosequence",
             parent_location=self.course.location,
@@ -561,7 +565,6 @@ class UsersApiTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_user_courses_list_post(self):
-        course = CourseFactory.create()
         test_uri = '/api/users'
         local_username = self.test_username + str(randint(11, 99))
         data = {'email': self.test_email, 'username': local_username, 'password':
@@ -569,12 +572,12 @@ class UsersApiTests(TestCase):
         response = self.do_post(test_uri, data)
         user_id = response.data['id']
         test_uri = '{}/{}/courses'.format(test_uri, str(user_id))
-        data = {'course_id': course.id}
+        data = {'course_id': self.course.id}
         response = self.do_post(test_uri, data)
         self.assertEqual(response.status_code, 201)
-        confirm_uri = self.test_server_prefix + test_uri + '/' + course.id
+        confirm_uri = self.test_server_prefix + test_uri + '/' + self.course.id
         self.assertEqual(response.data['uri'], confirm_uri)
-        self.assertEqual(response.data['id'], course.id)
+        self.assertEqual(response.data['id'], self.course.id)
         self.assertTrue(response.data['is_active'])
 
     def test_user_courses_list_post_undefined_user(self):
@@ -599,7 +602,6 @@ class UsersApiTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_user_courses_list_get(self):
-        course = CourseFactory.create(display_name="TEST COURSE")
         test_uri = '/api/users'
         local_username = self.test_username + str(randint(11, 99))
         data = {'email': self.test_email, 'username': local_username, 'password':
@@ -607,16 +609,26 @@ class UsersApiTests(TestCase):
         response = self.do_post(test_uri, data)
         user_id = response.data['id']
         test_uri = '{}/{}/courses'.format(test_uri, str(user_id))
-        data = {'course_id': course.id}
+        data = {'course_id': self.course.id}
         response = self.do_post(test_uri, data)
         self.assertEqual(response.status_code, 201)
+        confirm_uri = self.test_server_prefix + test_uri + '/' + self.course.id
+
+        course_with_out_date_values = CourseFactory.create()
+        data = {'course_id': course_with_out_date_values.id}
+        response = self.do_post(test_uri, data)
+        self.assertEqual(response.status_code, 201)
+
         response = self.do_get(test_uri)
         self.assertEqual(response.status_code, 200)
-        confirm_uri = self.test_server_prefix + test_uri + '/' + course.id
-        self.assertEqual(response.data[0]['uri'], confirm_uri)
-        self.assertEqual(response.data[0]['id'], course.id)
-        self.assertTrue(response.data[0]['is_active'])
-        self.assertEqual(response.data[0]['name'], course.display_name)
+        self.assertEqual(response.data[1]['uri'], confirm_uri)
+        self.assertEqual(response.data[1]['id'], self.course.id)
+        self.assertTrue(response.data[1]['is_active'])
+        self.assertEqual(response.data[1]['name'], self.course.display_name)
+        self.assertEqual(response.data[1]['start'], self.course.start)
+        self.assertEqual(response.data[1]['end'], self.course.end)
+        self.assertEqual(response.data[0]['start'], course_with_out_date_values.start)
+        self.assertEqual(response.data[0]['end'], course_with_out_date_values.end)
 
     def test_user_courses_list_get_undefined_user(self):
         test_uri = '/api/users/2134234/courses'
