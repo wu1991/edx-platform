@@ -33,6 +33,7 @@ urlpatterns = patterns(
     url(r'^(?P<course_id>[^/]+/[^/]+/[^/]+)/metrics/*$', courses_views.CourseMetrics.as_view(), name='course-metrics'),
     url(r'^(?P<course_id>[^/]+/[^/]+/[^/]+)/metrics/proficiency/leaders/*$', courses_views.CoursesLeadersList.as_view(), name='course-metrics-proficiency-leaders'),
     url(r'^(?P<course_id>[^/]+/[^/]+/[^/]+)/metrics/completions/leaders/*$', courses_views.CoursesCompletionsLeadersList.as_view(), name='course-metrics-completions-leaders'),
+    url(r'^(?P<course_id>[^/]+/[^/]+/[^/]+)/metrics/social/$', courses_views.CoursesSocialMetrics.as_view(), name='courses-social-metrics'),
 )
 
 urlpatterns = format_suffix_patterns(urlpatterns)

@@ -1,7 +1,7 @@
 """ API implementation for user-oriented interactions. """
 
 import logging
-
+import json
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
@@ -993,13 +993,13 @@ class UsersSocialMetrics(SecureListAPIView):
         comment_user.course_id = course_id
 
         try:
-            data = comment_user.social_stats()
+            data = (comment_user.social_stats())[user_id]
             http_status = status.HTTP_200_OK
         except CommentClientRequestError, e:
             data = {
                 "err_msg": str(e)
             }
-            http_status = status.HTTP_500_INTERNAL_SERVER_ERROR
+            status.HTTP_500_INTERNAL_SERVER_ERROR
 
         return Response(data, http_status)
 
