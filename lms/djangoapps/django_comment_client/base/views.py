@@ -20,7 +20,8 @@ from django.utils.translation import ugettext as _
 
 from edxmako.shortcuts import render_to_string
 from courseware.courses import get_course_with_access, get_course_by_id
-from course_groups.cohorts import get_cohort_id, is_commentable_cohorted
+from course_groups.models import CourseUserGroup
+from course_groups.cohorts import get_cohorts, get_cohort_id, is_commentable_cohorted
 
 from django_comment_client.utils import JsonResponse, JsonError, extract, add_courseware_context
 
@@ -105,17 +106,18 @@ def create_thread(request, course_id, commentable_id):
 
     # Cohort the thread if the commentable is cohorted.
     if is_commentable_cohorted(course_id, commentable_id):
-        user_group_id = get_cohort_id(user, course_id)
+        user_cohorts = get_cohorts(user, course_id, group_type=CourseUserGroup.ANY)
+        user_group_ids = [cohort.id for cohort in user_cohorts]
 
+        # Not sure of the proper behavior here, currently selecting the first cohort..
+        group_id = post.get('group_id', user_group_ids[0] if user_group_ids else None)
         # TODO (vshnayder): once we have more than just cohorts, we'll want to
         # change this to a single get_group_for_user_and_commentable function
         # that can do different things depending on the commentable_id
-        if cached_has_permission(request.user, "see_all_cohorts", course_id):
-            # admins can optionally choose what group to post as
-            group_id = post.get('group_id', user_group_id)
-        else:
+        if group_id not in user_group_ids and \
+           not cached_has_permission(request.user, "see_all_cohorts", course_id):
             # regular users always post with their own id.
-            group_id = user_group_id
+            group_id = user_group_ids[0] if user_group_ids else None
 
         if group_id:
             thread.update_attributes(group_id=group_id)

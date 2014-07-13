@@ -1159,8 +1159,10 @@ class DiscussionService(object):
         from django_comment_client.forum.views import get_threads
         from django_comment_client.permissions import cached_has_permission
         import django_comment_client.utils as utils
+        from course_groups.models import CourseUserGroup
         from course_groups.cohorts import (
             is_course_cohorted,
+            get_cohorts,
             get_cohort_id,
             get_cohorted_commentables,
             get_course_cohorts
@@ -1174,7 +1176,9 @@ class DiscussionService(object):
         user_info = cc.User.from_django_user(self.runtime.user).to_dict()
         course_id = self.runtime.course_id
         course = get_course_with_access(self.runtime.user, course_id, 'load_forum')
-        user_cohort_id = get_cohort_id(user, course_id)
+        user_cohorts = get_cohorts(user, course_id, group_type=CourseUserGroup.ANY)
+        user_cohort_ids = [cohort.id for cohort in user_cohorts]
+
 
         unsafethreads, query_params = get_threads(request, course_id)
         threads = [utils.safe_content(thread) for thread in unsafethreads]
@@ -1201,7 +1205,7 @@ class DiscussionService(object):
             'roles': saxutils.escape(json.dumps(utils.get_role_ids(course_id)), escapedict),
             'is_moderator': cached_has_permission(user, "see_all_cohorts", course_id),
             'cohorts': cohorts,
-            'user_cohort': user_cohort_id,
+            'user_cohorts': user_cohort_ids,
             'cohorted_commentables': cohorted_commentables,
             'is_course_cohorted': is_course_cohorted(course_id),
             'has_permission_to_create_thread': cached_has_permission(user, "create_thread", course_id),
