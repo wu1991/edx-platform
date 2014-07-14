@@ -1183,13 +1183,18 @@ class DiscussionService(object):
         unsafethreads, query_params = get_threads(request, course_id)
         threads = [utils.safe_content(thread) for thread in unsafethreads]
 
+        is_moderator = cached_has_permission(user, "see_all_cohorts", course_id)
         flag_moderator = cached_has_permission(user, 'openclose_thread', course_id) or \
                          has_access(user, course, 'staff')
 
         annotated_content_info = utils.get_metadata_for_threads(course_id, threads, user, user_info)
         category_map = utils.get_discussion_category_map(course)
 
-        cohorts = get_course_cohorts(course_id)
+        if is_moderator:
+            cohorts = get_course_cohorts(course_id, group_type=CourseUserGroup.ANY)
+        else:
+            cohorts = user_cohorts
+
         cohorted_commentables = get_cohorted_commentables(course_id)
 
         context = {
@@ -1203,7 +1208,7 @@ class DiscussionService(object):
             'annotated_content_info': saxutils.escape(json.dumps(annotated_content_info), escapedict),
             'category_map': category_map,
             'roles': saxutils.escape(json.dumps(utils.get_role_ids(course_id)), escapedict),
-            'is_moderator': cached_has_permission(user, "see_all_cohorts", course_id),
+            'is_moderator': is_moderator,
             'cohorts': cohorts,
             'user_cohorts': user_cohort_ids,
             'cohorted_commentables': cohorted_commentables,
