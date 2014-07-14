@@ -999,7 +999,7 @@ class UsersSocialMetrics(SecureListAPIView):
             data = {
                 "err_msg": str(e)
             }
-            status.HTTP_500_INTERNAL_SERVER_ERROR
+            http_status = status.HTTP_500_INTERNAL_SERVER_ERROR
 
         return Response(data, http_status)
 
