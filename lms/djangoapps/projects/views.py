@@ -15,6 +15,9 @@ from xblock.runtime import KeyValueStore
 
 from courseware.courses import get_course
 from courseware.model_data import FieldDataCache
+from course_groups.cohorts import (add_cohort, add_user_to_cohort, get_cohort_by_name,
+                                   remove_user_from_cohort)
+from course_groups.models import CourseUserGroup
 from xmodule.modulestore import Location
 
 from .models import Project, Workgroup, WorkgroupSubmission
@@ -47,6 +50,21 @@ class WorkgroupsViewSet(viewsets.ModelViewSet):
     serializer_class = WorkgroupSerializer
     model = Workgroup
 
+    def create(self, request):
+        """
+        Create a new workgroup and its cohort.
+        """
+        response = super(WorkgroupsViewSet, self).create(request)
+
+        if response.status_code == status.HTTP_201_CREATED:
+            # create the workgroup cohort
+            workgroup = self.object
+            course_id = request.DATA.get('course_id')
+
+            add_cohort(course_id, workgroup.cohort_name, CourseUserGroup.WORKGROUP)
+
+        return response
+
     @action(methods=['get', 'post'])
     def groups(self, request, pk):
         """
@@ -61,6 +79,10 @@ class WorkgroupsViewSet(viewsets.ModelViewSet):
                     response_data.append(serializer.data)
             return Response(response_data, status=status.HTTP_200_OK)
         else:
+            course_id = request.DATA.get('course_id')
+            if course_id is None:
+                return Response({}, status=status.HTTP_400_BAD_REQUEST)
+
             group_id = request.DATA.get('id')
             try:
                 group = Group.objects.get(id=group_id)
@@ -88,6 +110,9 @@ class WorkgroupsViewSet(viewsets.ModelViewSet):
             return Response(response_data, status=status.HTTP_200_OK)
         elif request.method == 'POST':
             user_id = request.DATA.get('id')
+            course_id = request.DATA.get('course_id')
+            if course_id is None:
+                return Response({}, status=status.HTTP_400_BAD_REQUEST)
             try:
                 user = User.objects.get(id=user_id)
             except ObjectDoesNotExist:
@@ -95,17 +120,25 @@ class WorkgroupsViewSet(viewsets.ModelViewSet):
                 return Response({"detail": message}, status.HTTP_400_BAD_REQUEST)
             workgroup = self.get_object()
             workgroup.users.add(user)
+            # add user to the workgroup cohort
+            cohort = get_cohort_by_name(course_id, workgroup.cohort_name, CourseUserGroup.WORKGROUP)
+            add_user_to_cohort(cohort, user.username)
             workgroup.save()
             return Response({}, status=status.HTTP_201_CREATED)
         else:
             user_id = request.DATA.get('id')
+            course_id = request.DATA.get('course_id')
+            if course_id is None:
+                return Response({}, status=status.HTTP_400_BAD_REQUEST)
+            workgroup = self.get_object()
+            cohort = get_cohort_by_name(course_id, workgroup.cohort_name, CourseUserGroup.WORKGROUP)
             try:
                 user = User.objects.get(id=user_id)
             except ObjectDoesNotExist:
                 message = 'User {} does not exist'.format(user_id)
                 return Response({"detail": message}, status.HTTP_400_BAD_REQUEST)
-            workgroup = self.get_object()
             workgroup.users.remove(user)
+            remove_user_from_cohort(cohort, user.username, CourseUserGroup.WORKGROUP)
             return Response({}, status=status.HTTP_204_NO_CONTENT)
 
     @link()
