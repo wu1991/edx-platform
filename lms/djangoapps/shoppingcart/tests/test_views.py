@@ -1057,7 +1057,7 @@ class ShoppingCartViewsTests(ModuleStoreTestCase):
         self.assertIn(self.cart.company_contact_email, resp.content)
         self.assertIn(self.cart.recipient_email, resp.content)
         self.assertIn("Invoice #{order_id}".format(order_id=self.cart.id), resp.content)
-        self.assertIn('You have successfully purchased <b>{total_registration_codes} course registration codes'
+        self.assertIn('You have successfully purchased <strong>{total_registration_codes} course registration codes'
                       .format(total_registration_codes=context['total_registration_codes']), resp.content)
 
         # now redeem one of registration code from the previous order
