@@ -76,6 +76,9 @@ urlpatterns = ('',  # nopep8
     # Enrollment API RESTful endpoints
     url(r'^api/enrollment/v1/', include('enrollment.urls')),
 
+    # Course API
+    url(r'^api/courses/', include('course_api.urls', namespace='course_api')),
+
 )
 
 if settings.FEATURES["ENABLE_MOBILE_REST_API"]:
