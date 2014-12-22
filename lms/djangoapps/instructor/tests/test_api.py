@@ -11,7 +11,6 @@ import random
 import requests
 import shutil
 import tempfile
-from unittest import TestCase
 from urllib import quote
 
 from django.conf import settings
@@ -43,8 +42,8 @@ from shoppingcart.models import (
 from student.models import (
     CourseEnrollment, CourseEnrollmentAllowed, NonExistentCourseError
 )
-from student.tests.factories import UserFactory
-from student.roles import CourseBetaTesterRole
+from student.tests.factories import UserFactory, CourseModeFactory
+from student.roles import CourseBetaTesterRole, CourseSalesAdminRole, CourseFinanceAdminRole
 from xmodule.modulestore import ModuleStoreEnum
 from xmodule.modulestore.django import modulestore
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
@@ -1719,7 +1718,7 @@ class TestInstructorAPILevelsDataDump(ModuleStoreTestCase, LoginEnrollmentTestCa
         for i in range(2):
             course_registration_code = CourseRegistrationCode(
                 code='sale_invoice{}'.format(i), course_id=self.course.id.to_deprecated_string(),
-                created_by=self.instructor, invoice=self.sale_invoice_1
+                created_by=self.instructor, invoice=self.sale_invoice_1, mode_slug='honor'
             )
             course_registration_code.save()
 
@@ -1804,6 +1803,10 @@ class TestInstructorAPILevelsDataDump(ModuleStoreTestCase, LoginEnrollmentTestCa
             percentage_discount='10', created_by=self.instructor, is_active=True
         )
         coupon.save()
+
+        # Coupon Redeem Count only visible for Financial Admins.
+        CourseFinanceAdminRole(self.course.id).add_users(self.instructor)
+
         PaidCourseRegistration.add_to_order(self.cart, self.course.id)
         # apply the coupon code to the item in the cart
         resp = self.client.post(reverse('shoppingcart.views.use_code'), {'code': coupon.code})
@@ -1835,7 +1838,7 @@ class TestInstructorAPILevelsDataDump(ModuleStoreTestCase, LoginEnrollmentTestCa
         for i in range(2):
             course_registration_code = CourseRegistrationCode(
                 code='sale_invoice{}'.format(i), course_id=self.course.id.to_deprecated_string(),
-                created_by=self.instructor, invoice=self.sale_invoice_1
+                created_by=self.instructor, invoice=self.sale_invoice_1, mode_slug='honor'
             )
             course_registration_code.save()
 
@@ -1850,7 +1853,7 @@ class TestInstructorAPILevelsDataDump(ModuleStoreTestCase, LoginEnrollmentTestCa
         for i in range(5):
             course_registration_code = CourseRegistrationCode(
                 code='sale_invoice{}'.format(i), course_id=self.course.id.to_deprecated_string(),
-                created_by=self.instructor, invoice=self.sale_invoice_1
+                created_by=self.instructor, invoice=self.sale_invoice_1, mode_slug='honor'
             )
             course_registration_code.save()
 
@@ -1869,7 +1872,7 @@ class TestInstructorAPILevelsDataDump(ModuleStoreTestCase, LoginEnrollmentTestCa
         for i in range(5):
             course_registration_code = CourseRegistrationCode(
                 code='qwerty{}'.format(i), course_id=self.course.id.to_deprecated_string(),
-                created_by=self.instructor, invoice=self.sale_invoice_1
+                created_by=self.instructor, invoice=self.sale_invoice_1, mode_slug='honor'
             )
             course_registration_code.save()
 
@@ -1893,7 +1896,7 @@ class TestInstructorAPILevelsDataDump(ModuleStoreTestCase, LoginEnrollmentTestCa
         for i in range(5):
             course_registration_code = CourseRegistrationCode(
                 code='qwerty{}'.format(i), course_id=self.course.id.to_deprecated_string(),
-                created_by=self.instructor, invoice=self.sale_invoice_1
+                created_by=self.instructor, invoice=self.sale_invoice_1, mode_slug='honor'
             )
             course_registration_code.save()
 
@@ -1907,7 +1910,7 @@ class TestInstructorAPILevelsDataDump(ModuleStoreTestCase, LoginEnrollmentTestCa
         for i in range(5):
             course_registration_code = CourseRegistrationCode(
                 code='xyzmn{}'.format(i), course_id=self.course.id.to_deprecated_string(),
-                created_by=self.instructor, invoice=sale_invoice_2
+                created_by=self.instructor, invoice=sale_invoice_2, mode_slug='honor'
             )
             course_registration_code.save()
 
@@ -3014,8 +3017,10 @@ class TestCourseRegistrationCodes(ModuleStoreTestCase):
         Fixtures.
         """
         self.course = CourseFactory.create()
+        CourseModeFactory.create(course_id=self.course.id, min_price=50)
         self.instructor = InstructorFactory(course_key=self.course.id)
         self.client.login(username=self.instructor.username, password='test')
+        CourseSalesAdminRole(self.course.id).add_users(self.instructor)
 
         url = reverse('generate_registration_codes',
                       kwargs={'course_id': self.course.id.to_deprecated_string()})

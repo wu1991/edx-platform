@@ -9,6 +9,7 @@ from django.http import (
     HttpResponseBadRequest, HttpResponseForbidden, Http404
 )
 from django.utils.translation import ugettext as _
+from course_modes.models import CourseMode
 from util.json_request import JsonResponse
 from django.views.decorators.http import require_POST, require_http_methods
 from django.core.urlresolvers import reverse
@@ -25,7 +26,8 @@ from courseware.courses import get_course_by_id
 from courseware.views import registered_for_course
 from config_models.decorators import require_config
 from shoppingcart.reports import RefundReport, ItemizedPurchaseReport, UniversityRevenueShareReport, CertificateStatusReport
-from student.models import CourseEnrollment
+from student.models import CourseEnrollment, EnrollmentClosedError, CourseFullError, \
+    AlreadyEnrolledError
 from .exceptions import (
     ItemAlreadyInCartException, AlreadyEnrolledInCourseException,
     CourseDoesNotExistException, ReportTypeDoesNotExistException,
@@ -317,7 +319,6 @@ def get_reg_code_validity(registration_code, request, limiter):
 
 @require_http_methods(["GET", "POST"])
 @login_required
-@enforce_shopping_cart_enabled
 def register_code_redemption(request, registration_code):
     """
     This view allows the student to redeem the registration code
@@ -348,27 +349,41 @@ def register_code_redemption(request, registration_code):
     elif request.method == "POST":
         reg_code_is_valid, reg_code_already_redeemed, course_registration = get_reg_code_validity(registration_code,
                                                                                                   request, limiter)
-
         course = get_course_by_id(getattr(course_registration, 'course_id'), depth=0)
+        context = {
+            'reg_code': registration_code,
+            'site_name': site_name,
+            'course': course,
+            'reg_code_is_valid': reg_code_is_valid,
+            'reg_code_already_redeemed': reg_code_already_redeemed,
+        }
         if reg_code_is_valid and not reg_code_already_redeemed:
             #now redeem the reg code.
-            RegistrationCodeRedemption.create_invoice_generated_registration_redemption(course_registration, request.user)
-            CourseEnrollment.enroll(request.user, course.id)
-            context = {
-                'redemption_success': True,
-                'reg_code': registration_code,
-                'site_name': site_name,
-                'course': course,
-            }
+            redemption = RegistrationCodeRedemption.create_invoice_generated_registration_redemption(course_registration, request.user)
+            try:
+                kwargs = {}
+                if course_registration.mode_slug is not None:
+                    if CourseMode.mode_for_course(course.id, course_registration.mode_slug):
+                        kwargs['mode'] = course_registration.mode_slug
+                    else :
+                        context['redeem_code_error'] = True
+                        context['redemption_success'] = False
+                        return render_to_response(template_to_render, context)
+
+                redemption.course_enrollment = CourseEnrollment.enroll(request.user, course.id, **kwargs)
+                redemption.save()
+                context['redemption_success'] = True
+            except EnrollmentClosedError:
+                context['enrollment_closed'] = True
+                context['redemption_success'] = False
+            except CourseFullError:
+                context['course_full'] = True
+                context['redemption_success'] = False
+            except AlreadyEnrolledError:
+                context['registered_for_course'] = True
+                context['redemption_success'] = False
         else:
-            context = {
-                'reg_code_is_valid': reg_code_is_valid,
-                'reg_code_already_redeemed': reg_code_already_redeemed,
-                'redemption_success': False,
-                'reg_code': registration_code,
-                'site_name': site_name,
-                'course': course,
-            }
+            context['redemption_success'] = False
         return render_to_response(template_to_render, context)
 
 
