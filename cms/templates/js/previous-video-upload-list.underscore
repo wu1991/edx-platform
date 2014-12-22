@@ -1,5 +1,10 @@
 <div class="assets-library">
     <h3 class="assets-title"><%- gettext("Previous Uploads") %></h3>
+    <div class="wrapper-download-button">
+      <a href="<%- urlListUrl %>" class="button download-button">
+        <%- gettext("Download URL List") %>
+      </a>
+    </div>
     <table class="assets-table">
         <thead>
             <tr>
