@@ -20,6 +20,7 @@ from contentstore.tests.utils import CourseTestCase
 from contentstore.utils import reverse_course_url
 from xmodule.assetstore import AssetMetadata
 from xmodule.modulestore.django import modulestore
+from xmodule.modulestore.tests.factories import CourseFactory
 
 
 class VideoUploadTestMixin(object):
@@ -313,7 +314,9 @@ class VideoUrlsCsvTestCase(VideoUploadTestMixin, CourseTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             response["Content-Disposition"],
-            'attachment; filename="{course}_video_urls.csv"'.format(course=self.course.id.course)
+            "attachment; filename=video_urls.csv; filename*=utf-8''{course}_video_urls.csv".format(
+                course=self.course.id.course
+            )
         )
         response_reader = StringIO(response.content)
         reader = csv.DictReader(response_reader, dialect=csv.excel)
@@ -348,3 +351,17 @@ class VideoUrlsCsvTestCase(VideoUploadTestMixin, CourseTestCase):
                 else:
                     self.assertEqual(response_profile_url, "")
         self.assertEqual(count, len(self.previous_uploads))
+
+    def test_non_ascii_course(self):
+        course = CourseFactory.create(
+            number=u"nón-äscii",
+            video_upload_pipeline={
+                "course_video_upload_token": self.test_token,
+            }
+        )
+        response = self.client.get(self.get_url_for_course_key(course.id))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response["Content-Disposition"],
+            "attachment; filename=video_urls.csv; filename*=utf-8''n%C3%B3n-%C3%A4scii_video_urls.csv"
+        )

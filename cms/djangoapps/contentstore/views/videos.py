@@ -3,6 +3,7 @@ Views related to the video upload feature
 """
 from boto import s3
 import csv
+import urllib
 from uuid import uuid4
 
 from django.conf import settings
@@ -123,8 +124,14 @@ def videos_url_list(request, course_key_string):
     response = HttpResponse(content_type="text/csv")
     # Translators: This is the suggested filename when downloading the URL
     # listing for videos uploaded through Studio
-    filename = _("{course}_video_urls.csv").format(course=course.id.course)
-    response["Content-Disposition"] = 'attachment; filename="{filename}"'.format(filename=filename)
+    filename = _("{course}_video_urls").format(course=course.id.course)
+    # See https://tools.ietf.org/html/rfc6266#appendix-D
+    response["Content-Disposition"] = (
+        "attachment; filename=video_urls.csv; " +
+        "filename*=utf-8''{filename}.csv".format(
+            filename=urllib.quote(filename.encode("utf-8"))
+        )
+    )
     writer = csv.DictWriter(
         response,
         [name_col, duration_col, added_col, video_id_col] + list(profile_cols),
