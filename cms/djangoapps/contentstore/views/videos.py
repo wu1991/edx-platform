@@ -25,7 +25,7 @@ from xmodule.modulestore.django import modulestore
 from .course import get_course_and_check_access
 
 
-__all__ = ["videos_handler", "videos_url_list"]
+__all__ = ["videos_handler", "videos_url_list", "populate_videos"]
 
 
 # String constant used in asset keys to identify video assets.
@@ -313,3 +313,30 @@ def storage_service_key(bucket, file_name):
         file_name
     )
     return s3.key.Key(bucket, key_name)
+
+
+def populate_videos(request, course_key_string, num):
+    course = _get_and_validate_course(course_key_string, request.user)
+
+    foo = []
+    for i in range(int(num)):
+        edx_video_id = unicode(uuid4())
+        file_name = "auto_populated_{}.mp4".format(i)
+        foo.append(AssetMetadata(course.id.make_asset_key(VIDEO_ASSET_TYPE, edx_video_id)))
+        create_video({
+            "edx_video_id": edx_video_id,
+            "status": "complete",
+            "client_video_id": file_name,
+            "duration": 0,
+            "encoded_videos": [
+                {
+                    "url": "http://example.com/{}/{}".format(profile, edx_video_id),
+                    "file_size": 42,
+                    "bitrate": 42,
+                    "profile": profile,
+                }
+                for profile in ["desktop_mp4", "desktop_webm", "mobile_low", "mobile_high", "youtube"]
+            ],
+        })
+    modulestore().save_asset_metadata_list(foo, request.user.id)
+    return HttpResponse(status=204)
