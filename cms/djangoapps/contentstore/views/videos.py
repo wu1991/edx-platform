@@ -11,6 +11,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseNotFound
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_GET, require_http_methods
+import rfc6266
 
 from edxval.api import create_video, get_videos_for_ids
 from opaque_keys.edx.keys import CourseKey
@@ -126,11 +127,9 @@ def videos_url_list(request, course_key_string):
     # listing for videos uploaded through Studio
     filename = _("{course}_video_urls").format(course=course.id.course)
     # See https://tools.ietf.org/html/rfc6266#appendix-D
-    response["Content-Disposition"] = (
-        "attachment; filename=video_urls.csv; " +
-        "filename*=utf-8''{filename}.csv".format(
-            filename=urllib.quote(filename.encode("utf-8"))
-        )
+    response["Content-Disposition"] = rfc6266.build_header(
+        filename + ".csv",
+        filename_compat="video_urls.csv"
     )
     writer = csv.DictWriter(
         response,

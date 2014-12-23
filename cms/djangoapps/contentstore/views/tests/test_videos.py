@@ -314,9 +314,7 @@ class VideoUrlsCsvTestCase(VideoUploadTestMixin, CourseTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             response["Content-Disposition"],
-            "attachment; filename=video_urls.csv; filename*=utf-8''{course}_video_urls.csv".format(
-                course=self.course.id.course
-            )
+            "attachment; filename={course}_video_urls.csv".format(course=self.course.id.course)
         )
         response_reader = StringIO(response.content)
         reader = csv.DictReader(response_reader, dialect=csv.excel)
