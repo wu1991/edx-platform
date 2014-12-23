@@ -24,7 +24,7 @@ from xmodule.modulestore.django import modulestore
 
 class VideoUploadTestMixin(object):
     """
-    Test cases for the video upload page
+    Test cases for the video upload feature
     """
     def get_url_for_course_key(self, course_key):
         """Return video handler URL for the given course"""
@@ -107,6 +107,7 @@ class VideoUploadTestMixin(object):
             )
 
     def _get_previous_upload(self, edx_video_id):
+        """Returns the previous upload with the given video id."""
         return next(
             video
             for video in self.previous_uploads
@@ -150,6 +151,8 @@ class VideoUploadTestMixin(object):
 @patch.dict("django.conf.settings.FEATURES", {"ENABLE_VIDEO_UPLOAD_PIPELINE": True})
 @override_settings(VIDEO_UPLOAD_PIPELINE={"BUCKET": "test_bucket", "ROOT_PATH": "test_root"})
 class VideosHandlerTestCase(VideoUploadTestMixin, CourseTestCase):
+    """Test cases for the main video upload endpoint"""
+
     VIEW_NAME = "videos_handler"
 
     def test_get_json(self):
@@ -301,6 +304,8 @@ class VideosHandlerTestCase(VideoUploadTestMixin, CourseTestCase):
 @patch.dict("django.conf.settings.FEATURES", {"ENABLE_VIDEO_UPLOAD_PIPELINE": True})
 @override_settings(VIDEO_UPLOAD_PIPELINE={"BUCKET": "test_bucket", "ROOT_PATH": "test_root"})
 class VideoUrlsCsvTestCase(VideoUploadTestMixin, CourseTestCase):
+    """Test cases for the CSV download endpoint for video uploads"""
+
     VIEW_NAME = "videos_url_list"
 
     def test_get_csv(self):

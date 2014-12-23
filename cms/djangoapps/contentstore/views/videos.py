@@ -80,6 +80,7 @@ def videos_url_list(request, course_key_string):
         return HttpResponseNotFound()
 
     def get_profile_header(profile):
+        """Returns the column header string for the given profile's URLs"""
         # Translators: This is the header for a CSV file column
         # containing URLs for video encodings for the named profile
         # (e.g. desktop, mobile high quality, mobile low quality)
@@ -96,6 +97,12 @@ def videos_url_list(request, course_key_string):
     }
 
     def make_csv_dict(video):
+        """
+        Makes a dictionary suitable for writing CSV output. This involves
+        extracting the required items from the original video dict and
+        converting all keys and values to UTF-8 encoded string objects,
+        because the CSV module doesn't play well with unicode objects.
+        """
         ret = dict(
             [
                 (name_col, video["client_video_id"]),
@@ -108,9 +115,6 @@ def videos_url_list(request, course_key_string):
                 for encoded_video in video["encoded_videos"]
             ]
         )
-        print ret
-        # The csv module doesn't play well with unicode objects, so we must
-        # explicitly encode strings in UTF-8
         return {
             key.encode("utf-8"): value.encode("utf-8")
             for key, value in ret.items()
