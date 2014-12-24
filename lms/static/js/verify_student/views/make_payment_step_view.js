@@ -15,27 +15,40 @@ var edx = edx || {};
                 isActive: true,
                 suggestedPrices: [],
                 minPrice: 0,
-                currency: "usd"
+                currency: "usd",
+                upgrade: false,
+                verificationDeadline: '',
+                courseName: '',
+                requirements: {},
+                platformName: ''
             };
         },
 
         postRender: function() {
-            // Render requirements
-            // new edx.verify_student.RequirementsView({
-            //     el: $( '.requirements-container', this.el ),
-            //     requirements: this.stepData.requirements
-            // }).render();
+            var templateContext = this.templateContext();
 
             // Track a virtual pageview, for easy funnel reconstruction.
             window.analytics.page( 'payment', this.templateName );
 
             // Update the contribution amount with the amount the user
             // selected in a previous screen.
-            if ( this.stepData.contributionAmount ) {
-                this.selectPaymentAmount( this.stepData.contributionAmount );
+            if ( templateContext.contributionAmount ) {
+                this.selectPaymentAmount( templateContext.contributionAmount );
             }
 
-            if ( this.templateContext().suggestedPrices.length > 0 ) {
+            // The contribution section is hidden by default
+            // Display it if the user hasn't already selected an amount
+            // or is upgrading.
+            // In the short-term, we're also displaying this if there
+            // are no requirements (e.g. the user already verified).
+            // Otherwise, there's absolutely nothing to do on this page.
+            // In the future, we'll likely skip directly to payment
+            // from the track selection page if this happens.
+            if ( templateContext.upgrade || !templateContext.contributionAmount || templateContext.requirements.length === 0) {
+                $( '.wrapper-task' ).removeClass( 'hidden' ).removeAttr( 'aria-hidden' );
+            }
+
+            if ( templateContext.suggestedPrices.length > 0 ) {
                 // Enable the payment button once an amount is chosen
                 $( "input[name='contribution']" ).on( 'click', _.bind( this.enablePaymentButton, this ) );
             } else {

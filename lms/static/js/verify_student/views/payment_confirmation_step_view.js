@@ -9,6 +9,17 @@ var edx = edx || {};
     edx.verify_student = edx.verify_student || {};
 
     edx.verify_student.PaymentConfirmationStepView = edx.verify_student.StepView.extend({
+
+        defaultContext: function() {
+            return {
+                courseName: '',
+                courseStartDate: '',
+                coursewareUrl: '',
+                platformName: '',
+                requirements: []
+            };
+        },
+
         /**
          * Retrieve receipt information from the shopping cart.
          *

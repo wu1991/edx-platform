@@ -35,25 +35,15 @@
                     // Render the template into the DOM
                     $( this.el ).html( _.template( templateHtml, templateContext ) );
 
+                    // Track a virtual pageview, for easy funnel reconstruction.
+                    window.analytics.page( 'verification', this.templateName );
+
                     // Allow subclasses to install custom event handlers
                     this.postRender();
                 }
             ).fail( _.bind( this.handleError, this ) );
 
             return this;
-        },
-
-        handleResponse: function( data ) {
-            var context = {
-                nextStepNum: this.nextStepNum,
-                nextStepTitle: this.nextStepTitle
-            };
-
-            // Include step-specific information
-            _.extend( context, this.stepData );
-
-            // Track a virtual pageview, for easy funnel reconstruction.
-            window.analytics.page( 'verification', this.templateName );
         },
 
         handleError: function( errorTitle, errorMsg ) {
@@ -66,7 +56,6 @@
 
         templateContext: function() {
             var context = {
-                nextStepNum: this.nextStepNum,
                 nextStepTitle: this.nextStepTitle
             };
             return _.extend( context, this.defaultContext(), this.stepData );

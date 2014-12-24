@@ -1516,6 +1516,22 @@ class TestPayAndVerifyView(UrlResetMixin, ModuleStoreTestCase):
         response = self._get_page("verify_student_start_flow", course.id)
         self._assert_contribution_amount(response, "12.34")
 
+    def test_verification_deadline(self):
+        # Set a deadline on the course mode
+        course = self._create_course("verified")
+        mode = CourseMode.objects.get(
+            course_id=course.id,
+            mode_slug="verified"
+        )
+        expiration = datetime(2999, 1, 2, tzinfo=pytz.UTC)
+        mode.expiration_datetime = expiration
+        mode.save()
+
+        # Expect that the expiration date is set
+        response = self._get_page("verify_student_start_flow", course.id)
+        data = self._get_page_data(response)
+        self.assertEqual(data['verification_deadline'], "Jan 02, 2999 at 00:00 UTC")
+
     def _create_course(self, *course_modes, **kwargs):
         """Create a new course with the specified course modes. """
         course = CourseFactory.create()
@@ -1648,7 +1664,8 @@ class TestPayAndVerifyView(UrlResetMixin, ModuleStoreTestCase):
             'current_step': pay_and_verify_div['data-current-step'],
             'requirements': json.loads(pay_and_verify_div['data-requirements']),
             'message_key': pay_and_verify_div['data-msg-key'],
-            'contribution_amount': pay_and_verify_div['data-contribution-amount']
+            'contribution_amount': pay_and_verify_div['data-contribution-amount'],
+            'verification_deadline': pay_and_verify_div['data-verification-deadline']
         }
 
     def _assert_redirects_to_dashboard(self, response):
