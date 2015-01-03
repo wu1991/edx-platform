@@ -9,6 +9,7 @@ import json
 import datetime
 from uuid import uuid4
 
+from pytz import UTC
 from collections import namedtuple, defaultdict
 import collections
 from contextlib import contextmanager
@@ -409,6 +410,36 @@ class ModuleStoreAssetWriteInterface(ModuleStoreAssetInterface):
     """
     The write operations for assets and asset metadata
     """
+    def _save_assets_by_type(self, course_key, asset_metadata_list, course_assets, user_id, import_only):
+        """
+        Common private method that saves/updates asset metadata items in the internal modulestore
+        structure used to store asset metadata items.
+        """
+        # Lazily create a sorted list if not already created.
+        assets_by_type = defaultdict(lambda: SortedListWithKey(course_assets.get(asset_type, []), key=itemgetter('filename')))
+
+        for asset_md in asset_metadata_list:
+            if asset_md.asset_id.course_key != course_key:
+                log.warning("Asset's course {} does not match other assets for course {} - not saved.".format(
+                    asset_md.asset_id.course_key, course_key
+                ))
+                continue
+            asset_type = asset_md.asset_id.asset_type
+            all_assets = assets_by_type[asset_type]
+            asset_idx = self._find_asset_in_list(all_assets, asset_md.asset_id)
+            if not import_only:
+                asset_md.update({'edited_by': user_id, 'edited_on': datetime.datetime.now(UTC)})
+
+            # Translate metadata to Mongo format.
+            metadata_to_insert = asset_md.to_storable()
+            if asset_idx is None:
+                # Add new metadata sorted into the list.
+                all_assets.add(metadata_to_insert)
+            else:
+                # Replace existing metadata.
+                all_assets[asset_idx] = metadata_to_insert
+        return assets_by_type
+
     @contract(asset_metadata='AssetMetadata')
     def save_asset_metadata(self, asset_metadata, user_id, import_only):
         """
