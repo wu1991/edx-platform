@@ -35,7 +35,7 @@ if not on_rtd:  # only import and set the theme if we're building docs locally
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 root = path('../../../../').abspath()
 sys.path.insert(0, root)
-sys.path.append(root / "common/djangoapps/enrollment")
+sys.path.append(root / "common/djangoapps")
 sys.path.append('.')
 
 #sys.path.insert(
