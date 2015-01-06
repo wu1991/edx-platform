@@ -373,7 +373,7 @@ class StudentAccountUpdateTest(UrlResetMixin, TestCase):
 
 @ddt.ddt
 @override_settings(MODULESTORE=MODULESTORE_CONFIG)
-class StudentAccountLoginAndRegistrationTest(ModuleStoreTestCase):
+class StudentAccountLoginAndRegistrationTest(ModuleStoreTestCase, TestCase):
     """ Tests for the student account views that update the user's account information. """
 
     USERNAME = "bob"
