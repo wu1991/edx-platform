@@ -1,5 +1,5 @@
 ################################################
-edX Enrollment API Version 0
+edX Enrollment API Version 1
 ################################################
 
 .. toctree::

@@ -15,5 +15,11 @@ The following tasks and endpoints are currently supported.
 
    * - To:
      - Use this endpoint:
-   * - 
-     - 
+   * - :ref:`Get the user's enrollment status in a Course <Get the Users Enrollment Status in a Course>`
+     - /api/enrollment/v1/enrollment/{user_id},{course_id}
+   * - :ref:`Get enrollment details for a course<Get Enrollment Details for a Course>`
+     - /api/enrollment/v1/course/{course_id}
+   * - :ref:`View a user's enrollments <View and add to a Users Course Enrollments>`
+     - /api/enrollment/v1/enrollment
+   * - :ref:`Enroll a user in a course <View and add to a Users Course Enrollments>`
+     - /api/enrollment/v1/enrollment{“course_details”:{“course_id”:“*course_id*”}}

@@ -70,7 +70,7 @@ extensions = [
 exclude_patterns = ['build', 'links.rst']
 
 
-project = u'edX Enrollment API Version 0 Alpha'
+project = u'edX Enrollment API Version 1 Alpha'
 copyright = u'2015, edX'
 
 
