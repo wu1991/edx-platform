@@ -35,4 +35,3 @@ With the edX Enrollment API, you can:
 * :ref:`View a user's enrollments <View and add to a Users Course Enrollments>`
 
 * :ref:`Enroll a user in a course <View and add to a Users Course Enrollments>`
-* 
