@@ -173,22 +173,25 @@
     @extend %expand-collapse;
   }
 
+  // course content license
+  // --------------------
+  .course-license {
+    @extend .content-primary;
+    @include text-align(right);
+    display: block;
+  }
+
+
   // course status
   // --------------------
   .course-status {
     margin-bottom: $baseline;
 
-    .status-release, .course-license {
+    .status-release {
       @extend %t-copy-base;
       display: inline-block;
       color: $color-copy-base;
     }
-    .course-license {
-      display: block;
-    }
-
-    .course-license-label,
-    .xmodule_licensable,
     .status-release-label,
     .status-release-value,
     .status-actions {
@@ -197,7 +200,6 @@
       margin-bottom: 0;
     }
 
-    .course-license-label,
     .status-release-label {
       margin-right: ($baseline/4);
     }
@@ -214,7 +216,6 @@
     }
 
     // STATE: hover
-    .course-license:hover,
     .status-release:hover {
       .status-actions {
         opacity: 1.0;

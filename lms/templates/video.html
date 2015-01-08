@@ -101,7 +101,7 @@
         <li></li>
       </ol>
 
-      % if settings.FEATURES.get('CREATIVE_COMMONS_LICENSING', False) and video_license:
+      % if settings.FEATURES.get('CREATIVE_COMMONS_LICENSING', False) and licensable and video_license:
         <div class="xmodule_licensable license">
           ${video_license.html}
         </div>
