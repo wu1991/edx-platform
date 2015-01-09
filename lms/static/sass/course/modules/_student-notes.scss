@@ -5,6 +5,7 @@
 // --------------------
 // +notes
 // +toggling notes
+// +individual note (in context)
 // +creating/editing notes
 // +listing notes
 
@@ -68,8 +69,149 @@
   border-color: $error-color;
 }
 
-// +creating/editing notes
+// +individual note (in context)
+// --------------------
+.annotator-outer.annotator-outer {
+  @extend %ui-depth4;
+
+  // basic reset
+  font-family: $f-sans-serif !important;
+  font-weight: $font-regular !important;
+}
+
+// bubble
+.annotator-widget {
+  border-radius: ($baseline/10) !important;
+  box-shadow: 0 2px 0 1px $shadow-l2 !important;
+  background: $white !important;
+}
+
+.annotator-item {
+  padding: ($baseline/2) !important;
+}
+
+// +creating/editing notes (overrides for vendor styling)
+// --------------------
+.annotator-editor {
+
+  .annotator-controls {
+    @include text-align(left);
+    background: rgb(214, 214, 214) !important; //matches annotator JS editing bubble triangle color
+    font-family: $f-sans-serif !important;
+    padding: 8px;
+    border: none !important;
+    border-radius: 0 !important;
+
+    // actions
+    .annotator-save, .annotator-cancel {
+      font-family: $f-sans-serif !important;
+      font-size: 14px !important;
+      padding: ($baseline/4) ($baseline/2) !important;
+      border: none;
+      background: none;
+
+      // removing vendor icons
+      &:after {
+        display: none !important;
+      }
+    }
+
+    .annotator-save {
+      @extend %btn-inherited-primary;
+      @extend %t-action2;
+    }
+  }
+
+  .annotator-item {
+
+    textarea {
+      background: $white;
+      font-family: $f-sans-serif !important;
+      font-size: 14px !important;
+      font-style: normal !important;
+      line-height: 22px !important;
+      color: $gray-d2 !important;
+
+      // STATE: hover/focus
+      &:hover, &:focus {
+        background: $white;
+      }
+    }
+  }
+}
+
+
+// +listing notes (overrides for vendor styling)
 // --------------------
 
-// +listing notes
-// --------------------
+// temp
+.annotator-hide, .annotator-controls {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1.0 !important;
+}
+
+// highlight
+.annotator-hl {
+  background: $student-notes-highlight-color-focus;
+}
+
+// content
+.annotator-viewer {
+
+  // poorly scoped selector for content of a note's comment
+  div:first-of-type {
+    padding: ($baseline/4) !important;
+    font-family: $f-sans-serif !important;
+    font-size: 14px !important;
+    font-style: normal !important;
+    line-height: 22px !important;
+    color: $gray-d2 !important;
+  }
+
+  // controls
+  .annotator-controls {
+    // RTL support
+    @include right(0);
+    top: 0;
+    @include float(right);
+    @include padding-left($baseline/4);
+
+    .annotator-delete, .annotator-edit {
+      position: relative;
+      text-indent: 0 !important;
+
+      &:before {
+        @extend %shame-link-base;
+        @extend %t-icon4;
+        position: absolute;
+        font-family: FontAwesome !important;
+      }
+    }
+
+    .annotator-edit {
+      @include margin-right($baseline/4);
+
+      &:before {
+        top: 0;
+        left: -5px;
+        content: "\f069";
+      }
+    }
+
+    .annotator-delete {
+
+      &:before {
+        top: 0;
+        left: -5px;
+        content: "\f1e5";
+      }
+    }
+  }
+
+  // necessary, but ugly overrides
+  .annotator-wrapper.annotator-wrapper.annotator-wrapper .annotator-outer.annotator-viewer .annotator-controls button {
+    background-image: none !important;
+    background-position: 0 0 !important;
+  }
+}
