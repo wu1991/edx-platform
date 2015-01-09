@@ -38,7 +38,7 @@ There are three ways that builds start in our jenkins testing infastructure for 
   >1. Go to [https://build.testeng.edx.org/job/edx-platform-all-tests/build](https://build.testeng.edx.org/job/edx-platform-all-tests/build)
   >2. Make sure you are __logged in__. If you are already logged in, your username and a 'log out' link will be in the
   >   upper right corner of the page. Else, the 'log in' link will be there.
-  >4. Enter either the commit hash or the pull request refspec that you want to test.
+  >4. Enter either the commit hash or the pull request refspec that you want to test. Examples of valid refspecs are below the input field.
   >5. Click 'Build'.
   
 * How it is reported
