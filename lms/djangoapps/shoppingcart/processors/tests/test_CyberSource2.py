@@ -836,12 +836,16 @@ class CyberSource2Test(TestCase):
             order2_id=order2.id,
         )
 
-        with patch('shoppingcart.processors.CyberSource2.requests') as mock_requests:
-            mock_requests.get.return_value = mock_response = Mock()
-            mock_response.status_code = 200
-            mock_response.content = test_csv_data
+        with patch('shoppingcart.sync.EmailMessage.send') as send_mail:
+            with patch('shoppingcart.processors.CyberSource2.requests') as mock_requests:
+                mock_requests.get.return_value = mock_response = Mock()
+                mock_response.status_code = 200
+                mock_response.content = test_csv_data
 
-            sync_op = perform_sync()
+                sync_op = perform_sync(summary_email_to='foo@bar.com')
+
+                # make sure that the summary email was sent
+                self.assertTrue(send_mail.called)
 
         self.assertEqual(sync_op.rows_processed, 3)
         self.assertEqual(sync_op.rows_in_error, 0)

@@ -4,8 +4,10 @@ Payment Processor and the local database
 """
 
 import pytz
-
+from django.conf import settings
+from django.core.mail.message import EmailMessage
 from datetime import datetime
+from django.utils.translation import ugettext as _
 
 from .models import (
     Order,
@@ -17,7 +19,7 @@ from .processors import (
 )
 
 
-def perform_sync(start_date=None, end_date=None):
+def perform_sync(start_date=None, end_date=None, summary_email_to=None):
     """
     This method will perform a sync from the Payment Processor to the local database in the given date ranges. If no
     dates are provided, then we will sync from the last known sync date that has been stored in our sync history
@@ -55,7 +57,7 @@ def perform_sync(start_date=None, end_date=None):
     )
     sync_op.save()
 
-    num_processed, num_in_err, __ = synchronize_transactions(start_date, end_date)
+    num_processed, num_in_err, errors = synchronize_transactions(start_date, end_date)
 
     # note, don't commit a end_date to the sync history that is greater than the last processed
     # transaction. This is because some processors can have a lag in when they can show up in reports
@@ -66,5 +68,32 @@ def perform_sync(start_date=None, end_date=None):
     sync_op.sync_ended_at = datetime.now(pytz.UTC)
 
     sync_op.save()
+
+    # lastly, send a summary email if requested
+    if summary_email_to:
+        subject = _("Shoppingcart Payment Processor Synchronization Report")
+
+        message = _("A synchronization of the Shoppingcart with the Payment Processor has been completed\n\nstart_date = {start_date}  end_date = {end_date}  num_processed = {num_processed}  rows_in_error = {rows_in_error}".format(
+            start_date=start_date,
+            end_date=end_date,
+            num_processed=num_processed,
+            rows_in_error=num_in_err)
+        )
+
+        if errors:
+            message = message + (_("\n\nDUMP OF ERRORS FOUND:"))
+            for error in errors:
+                message = message + ("\n\n{}".format(error))
+
+        to_email = [summary_email_to]
+        from_email = settings.PAYMENT_SUPPORT_EMAIL
+
+        email = EmailMessage(
+            subject=subject,
+            body=message,
+            from_email=from_email,
+            to=to_email
+        )
+        email.send()
 
     return sync_op

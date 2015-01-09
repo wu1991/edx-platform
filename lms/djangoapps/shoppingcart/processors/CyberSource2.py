@@ -853,7 +853,7 @@ def process_report_data(data):
             err = {
                 'remote_transaction_id': remote_transaction_id,
                 'raw_data': row,
-                'err_msg': str(ex)
+                'err_msg': repr(ex)
             }
             log.error('Failed to process record: {}'.format(err))
             PaymentTransactionSyncError.create_and_save(
