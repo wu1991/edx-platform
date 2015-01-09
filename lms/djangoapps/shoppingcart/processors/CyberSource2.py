@@ -838,7 +838,7 @@ def process_report_data(data):
             else:
                 raise Exception('Unknown transaction_type received: {transaction_type}'.format(transaction_type=_type))
 
-            transaction = PaymentProcessorTransaction.create(
+            PaymentProcessorTransaction.create(
                 remote_transaction_id,
                 account_id,
                 processed_at,
@@ -848,12 +848,12 @@ def process_report_data(data):
                 transaction_type
             )
             rows_processed = rows_processed + 1
-        except Exception, e:
+        except Exception, ex:  # pylint: disable=broad-except
             rows_in_error = rows_in_error + 1
             err = {
                 'remote_transaction_id': remote_transaction_id,
                 'raw_data': row,
-                'err_msg': repr(e)
+                'err_msg': str(ex)
             }
             log.error('Failed to process record: {}'.format(err))
             PaymentTransactionSyncError.create_and_save(
@@ -862,6 +862,5 @@ def process_report_data(data):
                 err['err_msg']
             )
             errors.append(err)
-
 
     return rows_processed, rows_in_error, errors

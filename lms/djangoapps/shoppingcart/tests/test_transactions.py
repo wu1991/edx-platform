@@ -32,6 +32,10 @@ MODULESTORE_CONFIG = mixed_store_config(settings.COMMON_TEST_DATA_ROOT, {}, incl
 
 @override_settings(MODULESTORE=MODULESTORE_CONFIG)
 class PaymentProcessorTransactionModelTests(ModuleStoreTestCase):
+    """
+    This test class will perform unit tests on the models regarding
+    the PaymentProcessorTransaction
+    """
     def setUp(self):
         """
         Set up testing environment
@@ -42,19 +46,23 @@ class PaymentProcessorTransactionModelTests(ModuleStoreTestCase):
         self.cost = 40
         self.course = CourseFactory.create()
         self.course_key = self.course.id
-        self.course_mode = CourseMode(course_id=self.course_key,
-                                      mode_slug="honor",
-                                      mode_display_name="honor cert",
-                                      min_price=self.cost)
+        self.course_mode = CourseMode(
+            course_id=self.course_key,
+            mode_slug="honor",
+            mode_display_name="honor cert",
+            min_price=self.cost
+        )
         self.course_mode.save()
 
         self.course2 = CourseFactory.create()
         self.course_key2 = self.course2.id
         self.cost2 = 100
-        self.course_mode2 = CourseMode(course_id=self.course_key2,
-                                      mode_slug="honor",
-                                      mode_display_name="honor cert",
-                                      min_price=self.cost2)
+        self.course_mode2 = CourseMode(
+            course_id=self.course_key2,
+            mode_slug="honor",
+            mode_display_name="honor cert",
+            min_price=self.cost2
+        )
         self.course_mode2.save()
 
         self.order1 = Order.get_cart_for_user(self.user)
@@ -76,7 +84,9 @@ class PaymentProcessorTransactionModelTests(ModuleStoreTestCase):
         )
 
         # look up directly in database and assert that they are the same
-        saved_transaction = PaymentProcessorTransaction.objects.get(remote_transaction_id = transaction.remote_transaction_id)
+        saved_transaction = PaymentProcessorTransaction.objects.get(
+            remote_transaction_id=transaction.remote_transaction_id
+        )
         self.assertEqual(transaction, saved_transaction)
 
         # then make sure there we can query against the mappings to the course
@@ -249,7 +259,7 @@ class PaymentProcessorTransactionModelTests(ModuleStoreTestCase):
                 transaction_id,
                 uuid.uuid4(),
                 datetime.datetime.now(pytz.UTC),
-                self.order.id,
+                self.order1.id,
                 'USD',
                 self.cost + 1.0,
                 TRANSACTION_TYPE_PURCHASE
@@ -292,18 +302,20 @@ class PaymentProcessorTransactionModelTests(ModuleStoreTestCase):
         )
 
         # look up directly in database and assert that they are the same
-        saved_transaction = PaymentProcessorTransaction.objects.get(remote_transaction_id = transaction.remote_transaction_id)
+        saved_transaction = PaymentProcessorTransaction.objects.get(
+            remote_transaction_id=transaction.remote_transaction_id
+        )
         self.assertEqual(transaction, saved_transaction)
 
         saved_transaction2 = PaymentProcessorTransaction.create(
-                transaction.remote_transaction_id,
-                transaction.account_id,
-                transaction.processed_at,
-                transaction.order.id,
-                transaction.currency,
-                transaction.amount,
-                transaction.transaction_type
-            )
+            transaction.remote_transaction_id,
+            transaction.account_id,
+            transaction.processed_at,
+            transaction.order.id,
+            transaction.currency,
+            transaction.amount,
+            transaction.transaction_type
+        )
 
         # these should be the same
         self.assertEqual(saved_transaction, saved_transaction2)
@@ -323,7 +335,9 @@ class PaymentProcessorTransactionModelTests(ModuleStoreTestCase):
         )
 
         # look up directly in database and assert that they are the same
-        saved_transaction = PaymentProcessorTransaction.objects.get(remote_transaction_id = transaction.remote_transaction_id)
+        saved_transaction = PaymentProcessorTransaction.objects.get(
+            remote_transaction_id=transaction.remote_transaction_id
+        )
         self.assertEqual(transaction, saved_transaction)
 
         with self.assertRaises(IntegrityError):

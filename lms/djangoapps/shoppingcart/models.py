@@ -1664,7 +1664,7 @@ class PaymentProcessorTransaction(TimeStampedModel):
         except Order.DoesNotExist:
             raise OrderDoesNotExistException
 
-        transaction = PaymentProcessorTransaction(
+        cc_transaction = PaymentProcessorTransaction(
             remote_transaction_id=remote_transaction_id,
             account_id=account_id,
             processed_at=processed_at,
@@ -1674,22 +1674,22 @@ class PaymentProcessorTransaction(TimeStampedModel):
             transaction_type=transaction_type
         )
 
-        # The basic
+        # Do a quick check to see if it exists
         exists = PaymentProcessorTransaction.objects.filter(remote_transaction_id=remote_transaction_id).exists()
 
         if exists:
             # see if an already existing row is *exactly* the same
             existing = cls.get_by_remote_transaction_id(remote_transaction_id)
 
-            if transaction != existing:
+            if cc_transaction != existing:
                 raise IntegrityError("Attempting to change an existing transaction ({transaction_id}). This is not allowed!".format(transaction_id=remote_transaction_id))
 
             # if transactions have same data, then we just do nothing
         else:
             # this is a new row, so we save
-            transaction.save()
+            cc_transaction.save()
 
-        return transaction
+        return cc_transaction
 
     @classmethod
     def get_by_remote_transaction_id(cls, remote_transaction_id):
@@ -1794,38 +1794,38 @@ class PaymentProcessorTransaction(TimeStampedModel):
 
 
 @receiver(pre_save, sender=PaymentProcessorTransaction)
-def pre_transaction_save(sender, **kwargs):
+def pre_transaction_save(sender, **kwargs):  # pylint: disable=unused-argument
     """
     Do some assumption validation regarding transactions
     """
-    transaction = kwargs['instance']
-    transaction.validate()
+    cc_transaction = kwargs['instance']
+    cc_transaction.validate()
 
 
 @receiver(post_save, sender=PaymentProcessorTransaction)
-def post_transaction_save(sender, **kwargs):
+def post_transaction_save(sender, **kwargs):  # pylint: disable=unused-argument
     """
     Whenever we save a new PaymentProcessorTransaction, we should generate the mappings into
     the PaymentTransactionCourseMap
     """
 
     if kwargs['created']:
-        transaction = kwargs['instance']
+        cc_transaction = kwargs['instance']
 
         # go through all OrderItems and get all subclasses
-        order_items = OrderItem.objects.filter(order=transaction.order).select_subclasses()
+        order_items = OrderItem.objects.filter(order=cc_transaction.order).select_subclasses()
 
         for item in order_items:
             if hasattr(item, 'course_id'):
                 course_map = PaymentTransactionCourseMap(
-                    transaction=transaction,
+                    transaction=cc_transaction,
                     course_id=getattr(item, 'course_id'),
                     order_item=item,
                     # we can assume that the sum of all line items matches
                     # the amount in the transaction as we
                     # assert against that fact in the pre-save validation
-                    amount=item.line_cost if transaction.transaction_type == TRANSACTION_TYPE_PURCHASE else -item.line_cost,
-                    currency=transaction.currency
+                    amount=item.line_cost if cc_transaction.transaction_type == TRANSACTION_TYPE_PURCHASE else -item.line_cost,
+                    currency=cc_transaction.currency
                 )
                 course_map.save()
 

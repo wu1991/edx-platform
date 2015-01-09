@@ -42,7 +42,6 @@ def perform_sync(start_date=None, end_date=None):
     if not end_date:
         end_date = datetime.now(pytz.UTC)
 
-
     start_date.replace(hour=0, minute=0, second=0, microsecond=0)
     end_date.replace(hour=0, minute=0, second=0, microsecond=0)
 
@@ -56,8 +55,7 @@ def perform_sync(start_date=None, end_date=None):
     )
     sync_op.save()
 
-    num_processed, num_in_err, errors = synchronize_transactions(start_date, end_date)
-
+    num_processed, num_in_err, __ = synchronize_transactions(start_date, end_date)
 
     # note, don't commit a end_date to the sync history that is greater than the last processed
     # transaction. This is because some processors can have a lag in when they can show up in reports

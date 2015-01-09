@@ -663,7 +663,7 @@ class CyberSource2Test(TestCase):
         This will verify that we will flag any transactions whose totals don't match up to the Invoice
         """
 
-        order, course = self._set_up_purchased_order()
+        order, __ = self._set_up_purchased_order()
 
         test_data = [
             {
@@ -689,7 +689,7 @@ class CyberSource2Test(TestCase):
         This will verify that we will flag any refunds whose totals don't match up to the Invoice
         """
 
-        order, course = self._set_up_purchased_order()
+        order, __ = self._set_up_purchased_order()
 
         test_data = [
             {
@@ -827,7 +827,7 @@ class CyberSource2Test(TestCase):
 
         order, order2, course, course2 = self._setup_purchases()
 
-        test_csv_data ="""header\n
+        test_csv_data = """header\n
         batch_id,merchant_id, batch_date,request_id,merchant_ref_number,trans_ref_no,payment_method,currency,amount,transaction_type\n
         1,foo_account,1/1/15,1,{order_id},1,Visa,USD,40,ics_bill\n
         2,foo_account,1/1/15,1,{order2_id},2,Visa,USD,100,ics_bill\n
@@ -867,7 +867,7 @@ class CyberSource2Test(TestCase):
 
         order, order2, course, course2 = self._setup_purchases()
 
-        test_csv_data ="""header\n
+        test_csv_data = """header\n
         batch_id,merchant_id, batch_date,request_id,merchant_ref_number,trans_ref_no,payment_method,currency,amount,transaction_type\n
         1,foo_account,1/1/15,1,{order_id},1,Visa,USD,40,ics_bill\n
         2,foo_account,1/1/15,1,{order2_id},2,Visa,USD,100,ics_bill\n
@@ -882,15 +882,15 @@ class CyberSource2Test(TestCase):
             mock_response.content = test_csv_data
 
             sync_op = perform_sync(
-                datetime.datetime(2015,1,1,tzinfo=pytz.UTC),
-                datetime.datetime(2015,1,2,tzinfo=pytz.UTC)
+                datetime.datetime(2015, 1, 1, tzinfo=pytz.UTC),
+                datetime.datetime(2015, 1, 2, tzinfo=pytz.UTC)
             )
             self.assertEqual(sync_op.rows_processed, 3)
             self.assertEqual(sync_op.rows_in_error, 0)
 
             sync_op = perform_sync(
-                datetime.datetime(2015,1,1,tzinfo=pytz.UTC),
-                datetime.datetime(2015,1,2,tzinfo=pytz.UTC)
+                datetime.datetime(2015, 1, 1, tzinfo=pytz.UTC),
+                datetime.datetime(2015, 1, 2, tzinfo=pytz.UTC)
             )
             self.assertEqual(sync_op.rows_processed, 3)
             self.assertEqual(sync_op.rows_in_error, 0)
@@ -918,9 +918,9 @@ class CyberSource2Test(TestCase):
         This verifies getting report data over all accounts defined in the configuration
         """
 
-        order, order2, course, course2 = self._setup_purchases()
+        order, order2, __, ___ = self._setup_purchases()
 
-        test_csv_data ="""header\n
+        test_csv_data = """header\n
         batch_id,merchant_id, batch_date,request_id,merchant_ref_number,trans_ref_no,payment_method,currency,amount,transaction_type\n
         1,foo_account,1/1/15,1,{order_id},1,Visa,USD,40,ics_bill\n
         2,foo_account,1/1/15,1,{order2_id},2,Visa,USD,100,ics_bill\n
@@ -948,13 +948,13 @@ class CyberSource2Test(TestCase):
         """
         This verifies getting report data over all accounts defined in the configuration
         """
-        order, order2, course, course2 = self._setup_purchases()
+        __, ___, course, ____ = self._setup_purchases()
 
         user = UserFactory.create()
         order3 = Order.get_cart_for_user(user)
         PaidCourseRegistration.add_to_order(order3, course.id)
 
-        test_csv_data ="""header\n
+        test_csv_data = """header\n
         batch_id,merchant_id, batch_date,request_id,merchant_ref_number,trans_ref_no,payment_method,currency,amount,transaction_type\n
         1,foo_account,1/1/15,1,{order_id},1,Visa,USD,40,ics_bill\n""".format(
             order_id=order3.id,

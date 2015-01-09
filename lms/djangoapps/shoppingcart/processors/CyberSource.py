@@ -452,7 +452,7 @@ REASONCODE_MAP.update(
 )
 
 
-def sychronize_transactions(start_date, end_date):
+def sychronize_transactions(start_date, end_date):  # pylint: disable=unused-argument
     """
     Concrete implementation of the API
     """
