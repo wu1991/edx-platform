@@ -311,7 +311,7 @@ class PaymentProcessorTransactionModelTests(ModuleStoreTestCase):
             transaction.remote_transaction_id,
             transaction.account_id,
             transaction.processed_at,
-            transaction.order.id,
+            transaction.order.id,  # pylint: disable=no-member
             transaction.currency,
             transaction.amount,
             transaction.transaction_type

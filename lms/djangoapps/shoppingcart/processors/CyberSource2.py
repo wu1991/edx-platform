@@ -736,7 +736,7 @@ def get_report_data_for_account(account_name, config, date):
         # CyberSource will return 400's if a date is requested that it can't fulfill
 
         now = datetime.now(pytz.UTC)
-        now.replace(hour=0, minute=0, second=0, microsecond=0)
+        now.replace(hour=0, minute=0, second=0, microsecond=0)  # pylint: disable=maybe-no-member
 
         # CyberSource will not support downloading of data more than 180 days old
         if now - date >= timedelta(179):

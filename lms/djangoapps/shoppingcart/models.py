@@ -1643,13 +1643,15 @@ class PaymentProcessorTransaction(TimeStampedModel):
         Equality operator
         """
 
-        return unicode(self.remote_transaction_id) == unicode(other.remote_transaction_id) and \
-            unicode(self.account_id) == unicode(other.account_id) and \
-            self.processed_at == other.processed_at and \
-            self.order.id == other.order.id and \
-            unicode(self.currency) == unicode(other.currency) and \
-            self.amount == other.amount and \
+        return (
+            unicode(self.remote_transaction_id) == unicode(other.remote_transaction_id) and
+            unicode(self.account_id) == unicode(other.account_id) and
+            self.processed_at == other.processed_at and
+            self.order.id == other.order.id and  # pylint: disable=no-member
+            unicode(self.currency) == unicode(other.currency) and
+            self.amount == other.amount and
             self.transaction_type == other.transaction_type
+        )
 
     @classmethod
     def create(cls, remote_transaction_id, account_id, processed_at, order_id, currency, amount, transaction_type):
@@ -1763,22 +1765,22 @@ class PaymentProcessorTransaction(TimeStampedModel):
         """
 
         # 1: We should only have a transaction for a Order that has a status='purchased'
-        if self.order.status != 'purchased':
-            raise ValidationError('remote_transaction_id {} was received for order {} but it does not have a purchased status'.format(self.remote_transaction_id, self.order.id))
+        if self.order.status != 'purchased':  # pylint: disable=no-member
+            raise ValidationError('remote_transaction_id {} was received for order {} but it does not have a purchased status'.format(self.remote_transaction_id, self.order.id))  # pylint: disable=no-member
 
         # 2: The transaction amount should be exactly the same as all OrderItems on the Order
         # As we don't support partial payments or refunds
-        total = sum(i.line_cost for i in self.order.orderitem_set.all())
+        total = sum(i.line_cost for i in self.order.orderitem_set.all())  # pylint: disable=no-member
 
         if self.transaction_type == TRANSACTION_TYPE_PURCHASE:
             if self.amount != total:
                 raise ValidationError('remote_transaction_id {} has purchase amount of {} but Order {} has a sum of {}'.format(
-                    self.remote_transaction_id, self.amount, self.order.id, total
+                    self.remote_transaction_id, self.amount, self.order.id, total  # pylint: disable=no-member
                 ))
         elif self.transaction_type == TRANSACTION_TYPE_REFUND:
             if self.amount != -total:
                 raise ValidationError('remote_transaction_id {} has refund amount of {} but Order {} has a sum of {}'.format(
-                    self.remote_transaction_id, self.amount, self.order.id, total
+                    self.remote_transaction_id, self.amount, self.order.id, total  # pylint: disable=no-member
                 ))
         else:
             raise ValidationError('Unknown transaction_type = {}'.format(self.transaction_type))
