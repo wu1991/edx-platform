@@ -9,6 +9,7 @@ from django.core.management.base import BaseCommand, CommandError
 from shoppingcart.sync import perform_sync
 import logging
 
+
 class Command(BaseCommand):
     """
     Django Management command to synchronize transactions from a payment processor

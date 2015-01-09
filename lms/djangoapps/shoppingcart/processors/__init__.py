@@ -90,6 +90,7 @@ def get_signed_purchase_params(cart, **kwargs):
     """
     return PROCESSOR_MODULE.get_signed_purchase_params(cart, **kwargs)
 
+
 def synchronize_transactions(start_date, end_date):
     """
     This will query out to the Payment Processor to synchronize any transactional data between any date ranges.
@@ -105,4 +106,3 @@ def synchronize_transactions(start_date, end_date):
         num_processed, num_in_err, errors
     """
     return PROCESSOR_MODULE.synchronize_transactions(start_date, end_date)
-

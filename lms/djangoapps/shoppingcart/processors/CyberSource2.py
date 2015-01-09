@@ -716,23 +716,11 @@ RECEIVED_REPORT_FIELD_NAMES = [
     'transaction_type',
 ]
 
+
 def get_report_data_for_account(account_name, config, date):
     """
     This gets the report data (PaymentBatchDetailReport) for a specified account configuration
     """
-
-    # CyberSource will not support downloading of data more than 180 days old
-    now = datetime.now(pytz.UTC)
-    now.replace(hour=0, minute=0, second=0, microsecond=0)
-
-    if now - date >= timedelta(179):
-        log.info('CyberSource does not support getting transaction dumps more than 180 days old')
-        return []
-
-    # Can't ask for things in the future
-    if date >= now - timedelta(1):
-        log.info('Requested date in the future')
-        return []
 
     url = "{base_hostname}/DownloadReport/{date_str}/{acct_name}/PaymentBatchDetailReport.csv".format(
         base_hostname=config['REPORTING_BASE_ENDPOINT'],
@@ -744,6 +732,21 @@ def get_report_data_for_account(account_name, config, date):
     print 'Fetching CyberSource transaction data via: {}'.format(url)
 
     response = requests.get(url, auth=(config['REPORTING_AUTH_USERNAME'], config['REPORTING_AUTH_PASSWORD']))
+    if response.status_code == 400:
+        # CyberSource will return 400's if a date is requested that it can't fulfill
+
+        now = datetime.now(pytz.UTC)
+        now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        # CyberSource will not support downloading of data more than 180 days old
+        if now - date >= timedelta(179):
+            log.info('CyberSource does not support getting transaction dumps more than 180 days old. Returning empty set.')
+            return []
+
+        # Can't ask for things in the future or even today's report
+        if date >= now - timedelta(1):
+            log.info('Requested date in the future. Returning empty set.')
+            return []
     if response.status_code == 403:
         raise CCProcessorFailedSyncronization('HTTP Auth Credentials for Report Services failed or were locked out!')
     elif response.status_code != 200:

@@ -1790,7 +1790,8 @@ class PaymentProcessorTransaction(TimeStampedModel):
         """
         obj = cls.objects.all().order_by('processed_at').values('processed_at').annotate(last=Max('processed_at'))
 
-        return obj.last if obj else None
+        return obj[0]['last'] if obj else None
+
 
 @receiver(pre_save, sender=PaymentProcessorTransaction)
 def pre_transaction_save(sender, **kwargs):
@@ -1818,13 +1819,13 @@ def post_transaction_save(sender, **kwargs):
             if hasattr(item, 'course_id'):
                 course_map = PaymentTransactionCourseMap(
                     transaction=transaction,
-                    course_id = getattr(item, 'course_id'),
-                    order_item = item,
+                    course_id=getattr(item, 'course_id'),
+                    order_item=item,
                     # we can assume that the sum of all line items matches
                     # the amount in the transaction as we
                     # assert against that fact in the pre-save validation
-                    amount = item.line_cost if transaction.transaction_type == TRANSACTION_TYPE_PURCHASE else -item.line_cost,
-                    currency = transaction.currency
+                    amount=item.line_cost if transaction.transaction_type == TRANSACTION_TYPE_PURCHASE else -item.line_cost,
+                    currency=transaction.currency
                 )
                 course_map.save()
 

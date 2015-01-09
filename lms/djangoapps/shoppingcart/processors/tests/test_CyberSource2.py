@@ -457,7 +457,6 @@ class CyberSource2Test(TestCase):
             mock_response.status_code = 200
             mock_response.content = self.MOCKED_REPORT_CSV_CONTENT
 
-
             data = get_report_data_for_account(
                 'foo_account',
                 {
@@ -465,7 +464,7 @@ class CyberSource2Test(TestCase):
                     'REPORTING_AUTH_USERNAME': 'foo',
                     'REPORTING_AUTH_PASSWORD': 'bar',
                 },
-                datetime.datetime.now()
+                datetime.datetime.now(pytz.UTC) - datetime.timedelta(1)
             )
 
             self.assertEqual(len(data), 4)
@@ -485,7 +484,7 @@ class CyberSource2Test(TestCase):
             "REPORTING_ACCOUNT_NAME": "first",
             "REPORTING_AUTH_USERNAME": "dummy",
             "REPORTING_AUTH_PASSWORD": "dummy",
-            "microsites" : {
+            "microsites": {
                 'foo': {
                     "REPORTING_BASE_ENDPOINT": "dummy",
                     "REPORTING_ACCOUNT_NAME": "second",
@@ -521,7 +520,7 @@ class CyberSource2Test(TestCase):
             mock_response.status_code = 200
             mock_response.content = self.MOCKED_REPORT_CSV_CONTENT
 
-            data = get_report_data(datetime.datetime.now())
+            data = get_report_data(datetime.datetime.now(pytz.UTC) - datetime.timedelta(1))
 
             # this should be 8 because we are fetching the same mocked out data twice
             # once for the root and the other for a microsite. Note there are two
@@ -570,10 +569,12 @@ class CyberSource2Test(TestCase):
 
         course = CourseFactory.create()
         course_key = course.id
-        course_mode = CourseMode(course_id=course_key,
-                                      mode_slug="honor",
-                                      mode_display_name="honor cert",
-                                      min_price=cost)
+        course_mode = CourseMode(
+            course_id=course_key,
+            mode_slug="honor",
+            mode_display_name="honor cert",
+            min_price=cost
+        )
         course_mode.save()
 
         order = Order.get_cart_for_user(user)
@@ -588,7 +589,7 @@ class CyberSource2Test(TestCase):
         """
 
         order, course = self._set_up_purchased_order()
-        order2, course2  = self._set_up_purchased_order(100)
+        order2, course2 = self._set_up_purchased_order(100)
 
         test_data = [
             {
@@ -670,7 +671,7 @@ class CyberSource2Test(TestCase):
                 'batch_date': '1/2/15',
                 'merchant_ref_number': str(order.id),
                 'currency': 'USD',
-                'amount': str(order.total_cost+10),
+                'amount': str(order.total_cost + 10),
                 'transaction_type': 'ics_bill',
                 'trans_ref_no': '100',
             },
@@ -705,7 +706,7 @@ class CyberSource2Test(TestCase):
                 'batch_date': '1/2/15',
                 'merchant_ref_number': str(order.id),
                 'currency': 'USD',
-                'amount': str(-order.total_cost+10),
+                'amount': str(-order.total_cost + 10),
                 'transaction_type': 'ics_credit',
                 'trans_ref_no': '101',
             },
@@ -727,17 +728,21 @@ class CyberSource2Test(TestCase):
         user = UserFactory.create()
 
         course = CourseFactory.create()
-        course_mode = CourseMode(course_id=course.id,
-                                      mode_slug="honor",
-                                      mode_display_name="honor cert",
-                                      min_price=40)
+        course_mode = CourseMode(
+            course_id=course.id,
+            mode_slug="honor",
+            mode_display_name="honor cert",
+            min_price=40
+        )
         course_mode.save()
 
         course2 = CourseFactory.create()
-        course_mode = CourseMode(course_id=course2.id,
-                                      mode_slug="honor",
-                                      mode_display_name="honor cert",
-                                      min_price=100)
+        course_mode = CourseMode(
+            course_id=course2.id,
+            mode_slug="honor",
+            mode_display_name="honor cert",
+            min_price=100
+        )
         course_mode.save()
 
         order = Order.get_cart_for_user(user)
@@ -784,17 +789,21 @@ class CyberSource2Test(TestCase):
         user = UserFactory.create()
 
         course = CourseFactory.create()
-        course_mode = CourseMode(course_id=course.id,
-                                      mode_slug="honor",
-                                      mode_display_name="honor cert",
-                                      min_price=40)
+        course_mode = CourseMode(
+            course_id=course.id,
+            mode_slug="honor",
+            mode_display_name="honor cert",
+            min_price=40
+        )
         course_mode.save()
 
         course2 = CourseFactory.create()
-        course_mode = CourseMode(course_id=course2.id,
-                                      mode_slug="honor",
-                                      mode_display_name="honor cert",
-                                      min_price=100)
+        course_mode = CourseMode(
+            course_id=course2.id,
+            mode_slug="honor",
+            mode_display_name="honor cert",
+            min_price=100
+        )
         course_mode.save()
 
         order = Order.get_cart_for_user(user)
@@ -872,11 +881,17 @@ class CyberSource2Test(TestCase):
             mock_response.status_code = 200
             mock_response.content = test_csv_data
 
-            sync_op = perform_sync()
+            sync_op = perform_sync(
+                datetime.datetime(2015,1,1,tzinfo=pytz.UTC),
+                datetime.datetime(2015,1,2,tzinfo=pytz.UTC)
+            )
             self.assertEqual(sync_op.rows_processed, 3)
             self.assertEqual(sync_op.rows_in_error, 0)
 
-            sync_op = perform_sync()
+            sync_op = perform_sync(
+                datetime.datetime(2015,1,1,tzinfo=pytz.UTC),
+                datetime.datetime(2015,1,2,tzinfo=pytz.UTC)
+            )
             self.assertEqual(sync_op.rows_processed, 3)
             self.assertEqual(sync_op.rows_in_error, 0)
 

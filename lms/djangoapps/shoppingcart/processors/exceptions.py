@@ -31,5 +31,6 @@ class CCProcessorUserDeclined(CCProcessorException):
     """Transaction declined."""
     pass
 
+
 class CCProcessorFailedSyncronization(CCProcessorException):
     pass
