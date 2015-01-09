@@ -10,12 +10,12 @@
         <div class="wrapper-photos">
           <div class="wrapper-photo">
             <div class="placeholder-photo">
-              <img id="face_image" src=""/>
+              <img id="face_image" src="" alt="<%- _.sprintf(  gettext( "Photo of %(fullName)s" ), { fullName: fullName } ) %>"/>
             </div>
           </div>
           <div class="wrapper-photo">
             <div class="placeholder-photo">
-              <img id="photo_id_image" src=""/>
+              <img id="photo_id_image" src="" alt="<%- _.sprintf(  gettext( "Photo of %(fullName)s's ID" ), { fullName: fullName } ) %>"/>
             </div>
           </div>
         </div>
