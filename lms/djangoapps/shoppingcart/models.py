@@ -1664,7 +1664,7 @@ class PaymentProcessorTransaction(TimeStampedModel):
         try:
             order = Order.objects.get(id=order_id)
         except Order.DoesNotExist:
-            raise OrderDoesNotExistException
+            raise OrderDoesNotExistException('Transaction {transaction_id} refers to order_id {order_id} but it cannot be found!'.format(transaction_id=remote_transaction_id, order_id=order_id))
 
         cc_transaction = PaymentProcessorTransaction(
             remote_transaction_id=remote_transaction_id,
