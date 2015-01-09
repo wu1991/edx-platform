@@ -34,11 +34,8 @@ Session Authentication
 **************************
 
 To use the edX Enrollment API, you can use session authentication in your
-application.
+application. 
 
-User role required?
-
-Syntax?
-
+You must authenticate as a registred edX user.
 
 .. include:: links.rst
