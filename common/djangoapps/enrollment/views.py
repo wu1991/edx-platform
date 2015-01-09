@@ -106,6 +106,8 @@ class EnrollmentCourseDetailView(APIView):
             
             Get enrollment details for a course.
 
+            **Note:** Getting enrollment details for a course does not require authentication.
+
         **Example Requests**:
 
             GET /api/enrollment/v1/course/{course_id}

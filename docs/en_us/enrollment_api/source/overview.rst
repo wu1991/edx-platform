@@ -14,15 +14,15 @@ format. Our REST API is simple, lightweight and optimized.
 You can use the edX Enrollment API for web, desktop, and mobile applications. 
 
 *************************************
-edX Enrollment API Version 1, Alpha
+edX Enrollment API Version 1
 *************************************
 
-The edX Enrollment API is currently at version 1.0 and is an Alpha release. We
-plan on making significant enhancements and changes to the API. 
+The edX Enrollment API is currently at version 1.0. We plan on making
+significant enhancements to this API.
 
-******************************
-edX Platform API Capabilities
-******************************
+********************************
+edX Enrollment API Capabilities
+********************************
 
 With the edX Enrollment API, you can:
 
