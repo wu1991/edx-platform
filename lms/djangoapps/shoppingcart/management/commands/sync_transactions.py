@@ -54,10 +54,4 @@ class Command(BaseCommand):
 
         mailto = options['mailto']
 
-        logger = logging.getLogger()
-        console = logging.StreamHandler()
-        console.setLevel(logging.DEBUG)
-        console.setFormatter(logging.Formatter('%(name)s - %(levelname)s - %(message)s'))
-        logger.addHandler(console)
-
         perform_sync(start_date, end_date, mailto)
