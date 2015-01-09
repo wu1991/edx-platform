@@ -22,6 +22,7 @@ from ...pages.lms.problem import ProblemPage
 from ...pages.lms.video.video import VideoPage
 from ...pages.lms.courseware import CoursewarePage
 from ...pages.lms.login_and_register import CombinedLoginAndRegisterPage
+from ...pages.lms.track_selection import TrackSelectionPage
 from ...fixtures.course import CourseFixture, XBlockFixtureDesc, CourseUpdateDesc
 
 
@@ -225,6 +226,39 @@ class RegisterFromCombinedPageTest(UniqueCourseTest):
     def test_toggle_to_login_form(self):
         self.register_page.visit().toggle_form()
         self.assertEqual(self.register_page.current_form, "login")
+
+
+@attr('shard_1')
+class PayAndVerifyTest(UniqueCourseTest):
+    """Test that we can proceed through the payment and verification flow."""
+    def setUp(self):
+        """Initialize the page objects, create a test course, create a user and log them in."""
+        super(PayAndVerifyTest, self).setUp()
+        self.track_selection_page = TrackSelectionPage(
+            self.browser,
+            course_id=self.course_id,
+            separate_verified=True
+        )
+
+        # Create a course to enroll in
+        # TODO: How to give this course a verified mode?
+        CourseFixture(
+            self.course_info['org'],
+            self.course_info['number'],
+            self.course_info['run'],
+            self.course_info['display_name']
+        ).install()
+
+        # Create a user and log them in
+        AutoAuthPage(self.browser).visit()
+
+    def test_verified_enroll(self):
+        DashboardPage(self.browser).visit()
+        # Navigate to the track selection page
+        self.track_selection_page.visit()
+
+        # Enter the payment and verification flow by opting to enroll as verified
+        self.track_selection_page.enroll("verified")
 
 
 class LanguageTest(WebAppTest):
