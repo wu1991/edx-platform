@@ -85,6 +85,7 @@ class MobileView(object):
         self.is_user = is_user
 
     def __call__(self, cls):
+        @functools.wraps(cls)
         class _Decorator(cls):
             """Inner decorator class to wrap the given class."""
             mobile_view(self.is_user)(cls)
